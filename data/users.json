@@ -1,0 +1,18 @@
+{
+    "iano": {
+        "password": "037ed7784ffedf223d9826be04a9222de331e4273983f0b6b73f4f875c5d95ee",
+        "data_files": {
+            "expenses": "iano_expenses.csv",
+            "income": "iano_income.csv",
+            "budgets": "iano_budgets.json"
+        }
+    },
+    "bigman": {
+        "password": "b47057f8109a13528099ae0669aa49c0354f11e0fdd9eafb19ecf6fb38e5ebcd",
+        "data_files": {
+            "expense": "bigman_expenses.csv",
+            "income": "bigman_income.csv",
+            "budgets": "bigman_budgets.json"
+        }
+    }
+}
