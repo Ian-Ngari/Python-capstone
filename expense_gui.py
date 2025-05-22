@@ -25,10 +25,38 @@ class ExpenseTrackerApp:
         self.root.geometry("1000x700")
         self.current_user = None
         
+        self.configure_theme()
+        
         if not os.path.exists(DATA_DIR):
             os.makedirs(DATA_DIR)
         
         self.setup_ui()
+
+    def configure_theme(self):
+        self.root.configure(bg='white')
+        
+        style = ttk.Style()
+        style.theme_use('clam')  
+        
+        style.configure('.', background='white', foreground='black')
+        style.configure('TFrame', background='white')
+        style.configure('TLabel', background='white', foreground='black')
+        style.configure('TButton', background='white', foreground='black', 
+                       bordercolor='black', borderwidth=1)
+        style.configure('TEntry', fieldbackground='white', foreground='black')
+        style.configure('TCombobox', fieldbackground='white', foreground='black')
+        style.configure('Treeview', background='white', foreground='black',
+                       fieldbackground='white')
+        style.configure('Treeview.Heading', background='white', foreground='black')
+        style.configure('TLabelframe', background='white', foreground='black')
+        style.configure('TLabelframe.Label', background='white', foreground='black')
+        
+        style.map('Treeview', background=[('selected', 'black')], 
+                  foreground=[('selected', 'white')])
+        style.map('TButton', background=[('active', 'black'), ('pressed', 'black')],
+                  foreground=[('active', 'white'), ('pressed', 'white')])
+        
+        plt.style.use('grayscale')
 
     def setup_ui(self):
         for widget in self.root.winfo_children():
@@ -59,32 +87,28 @@ class ExpenseTrackerApp:
     def show_main_app(self):
         self.clear_window()
         
-        menubar = tk.Menu(self.root)
-        
-        # File menu
-        file_menu = tk.Menu(menubar, tearoff=0)
+        menubar = tk.Menu(self.root, bg='white', fg='black', activebackground='black', activeforeground='white')
+       
+        file_menu = tk.Menu(menubar, tearoff=0, bg='white', fg='black', activebackground='black', activeforeground='white')
         file_menu.add_command(label="Logout", command=self.logout)
         file_menu.add_separator()
         file_menu.add_command(label="Exit", command=self.root.quit)
         menubar.add_cascade(label="File", menu=file_menu)
         
-        # Transactions menu
-        trans_menu = tk.Menu(menubar, tearoff=0)
+        trans_menu = tk.Menu(menubar, tearoff=0, bg='white', fg='black', activebackground='black', activeforeground='white')
         trans_menu.add_command(label="Add Expense", command=self.add_expense)
         trans_menu.add_command(label="Add Income", command=self.add_income)
         trans_menu.add_command(label="View Expenses", command=lambda: self.view_transactions("expense"))
         trans_menu.add_command(label="View Income", command=lambda: self.view_transactions("income"))
         menubar.add_cascade(label="Transactions", menu=trans_menu)
         
-        # Budgets menu
-        budget_menu = tk.Menu(menubar, tearoff=0)
+        budget_menu = tk.Menu(menubar, tearoff=0, bg='white', fg='black', activebackground='black', activeforeground='white')
         budget_menu.add_command(label="Set Budget", command=self.set_budget)
         budget_menu.add_command(label="View Budgets", command=self.view_budgets)
         budget_menu.add_command(label="Check Budgets", command=self.check_budgets)
         menubar.add_cascade(label="Budgets", menu=budget_menu)
         
-        # Reports menu
-        report_menu = tk.Menu(menubar, tearoff=0)
+        report_menu = tk.Menu(menubar, tearoff=0, bg='white', fg='black', activebackground='black', activeforeground='white')
         report_menu.add_command(label="Generate Report", command=self.generate_report)
         report_menu.add_command(label="Check Bill Reminders", command=self.check_bill_reminders)
         menubar.add_cascade(label="Reports", menu=report_menu)
@@ -113,10 +137,15 @@ class ExpenseTrackerApp:
         
         total_expenses = sum(float(e["Amount"]) for e in expenses) if expenses else 0
         total_income = sum(float(i["Amount"]) for i in income) if income else 0
+        net_balance = total_income - total_expenses
         
         ttk.Label(summary_frame, text=f"Total Expenses: KES {total_expenses:.2f}").pack(anchor=tk.W)
         ttk.Label(summary_frame, text=f"Total Income: KES {total_income:.2f}").pack(anchor=tk.W)
-        ttk.Label(summary_frame, text=f"Net Balance: KES {total_income - total_expenses:.2f}").pack(anchor=tk.W)
+        ttk.Label(summary_frame, text=f"Net Balance: KES {net_balance:.2f}").pack(anchor=tk.W)
+        
+        # Check if expenses exceed income
+        if total_expenses > total_income:
+            messagebox.showwarning("Warning", "Your expenses exceed your income! Please review your spending.")
 
     def hash_password(self, password):
         return hashlib.sha256(password.encode()).hexdigest()
@@ -191,7 +220,6 @@ class ExpenseTrackerApp:
                 with open(filepath, "w") as file:
                     json.dump(data, file, indent=4)
             else:
-                # Ensure all required fields are present
                 cleaned_data = []
                 for row in data:
                     cleaned_row = {field: row.get(field, "") for field in fieldnames}
@@ -215,7 +243,6 @@ class ExpenseTrackerApp:
         if username not in users:
             return
         
-        # Initialize file names if they don't exist
         if "data_files" not in users[username]:
             users[username]["data_files"] = {
                 "expense": f"{username}_expenses.csv",
@@ -226,21 +253,18 @@ class ExpenseTrackerApp:
         
         user_data = users[username]["data_files"]
         
-        # Initialize expenses file
         expense_file = os.path.join(DATA_DIR, user_data["expense"])
         if not os.path.exists(expense_file):
             with open(expense_file, "w", newline="", encoding='utf-8') as file:
                 writer = csv.DictWriter(file, fieldnames=["Date", "Category", "Amount", "Original_Amount", "Notes"])
                 writer.writeheader()
         
-        # Initialize income file
         income_file = os.path.join(DATA_DIR, user_data["income"])
         if not os.path.exists(income_file):
             with open(income_file, "w", newline="", encoding='utf-8') as file:
                 writer = csv.DictWriter(file, fieldnames=["Date", "Source", "Amount", "Original_Amount", "Notes"])
                 writer.writeheader()
         
-        # Initialize budgets file
         budgets_file = os.path.join(DATA_DIR, user_data["budgets"])
         if not os.path.exists(budgets_file):
             with open(budgets_file, "w", encoding='utf-8') as file:
@@ -258,7 +282,7 @@ class ExpenseTrackerApp:
         
         if username in users and users[username]["password"] == self.hash_password(password):
             self.current_user = username
-            # Ensure user data files exist
+            
             self.initialize_user_data(username)
             self.setup_ui()
         else:
@@ -311,26 +335,22 @@ class ExpenseTrackerApp:
         dialog = tk.Toplevel(self.root)
         dialog.title(f"Add {transaction_type.capitalize()}")
         dialog.geometry("400x400")
-        dialog.grab_set()  # Make dialog modal
+        dialog.grab_set()  
         
-        # Date
         ttk.Label(dialog, text="Date (YYYY-MM-DD):").pack(pady=(10,0))
         date_entry = ttk.Entry(dialog)
         date_entry.insert(0, datetime.now().strftime('%Y-%m-%d'))
         date_entry.pack()
         
-        # Currency
         ttk.Label(dialog, text="Currency:").pack(pady=(10,0))
         currency_var = tk.StringVar(value="KES")
         currency_menu = ttk.OptionMenu(dialog, currency_var, "KES", *EXCHANGE_RATES.keys())
         currency_menu.pack()
         
-        # Amount
         ttk.Label(dialog, text="Amount:").pack(pady=(10,0))
         amount_entry = ttk.Entry(dialog)
         amount_entry.pack()
         
-        # Category/Source
         if transaction_type == "expense":
             ttk.Label(dialog, text="Category:").pack(pady=(10,0))
             category_source_entry = ttk.Entry(dialog)
@@ -340,16 +360,14 @@ class ExpenseTrackerApp:
             category_source_entry = ttk.Entry(dialog)
             category_source_entry.pack()
         
-        # Notes
         ttk.Label(dialog, text="Notes:").pack(pady=(10,0))
         notes_entry = ttk.Entry(dialog)
         notes_entry.pack()
         
         def save_transaction():
             try:
-                # Validate inputs
                 date = date_entry.get()
-                datetime.strptime(date, '%Y-%m-%d')  # Validate date format
+                datetime.strptime(date, '%Y-%m-%d')  
                 
                 currency = currency_var.get()
                 amount = float(amount_entry.get())
@@ -366,10 +384,20 @@ class ExpenseTrackerApp:
                         messagebox.showerror("Error", "Please enter a source")
                         return
                 
-                # Convert to KES and round to 2 decimal places
                 amount_kes = round(amount * EXCHANGE_RATES[currency] / EXCHANGE_RATES["KES"], 2)
                 
-                # Create transaction record with proper data types
+                # Check for negative balance when adding expense
+                if transaction_type == "expense":
+                    expenses = self.load_user_data("expense")
+                    income = self.load_user_data("income")
+                    total_expenses = sum(float(e["Amount"]) for e in expenses) if expenses else 0
+                    total_income = sum(float(i["Amount"]) for i in income) if income else 0
+                    
+                    if (total_expenses + amount_kes) > total_income:
+                        if not messagebox.askyesno("Warning", 
+                                                  "This expense will make your total expenses exceed your income. Continue?"):
+                            return
+                
                 transaction = {
                     "Date": date,
                     "Amount": str(amount_kes),
@@ -384,15 +412,12 @@ class ExpenseTrackerApp:
                     transaction["Source"] = source
                     fieldnames = ["Date", "Source", "Amount", "Original_Amount", "Notes"]
                 
-                # Load existing data
                 existing_data = self.load_user_data(transaction_type)
                 if not isinstance(existing_data, list):
                     existing_data = []
                 
-                # Add new transaction
                 updated_data = existing_data + [transaction]
                 
-                # Save the data
                 if not self.save_user_data(updated_data, transaction_type, fieldnames):
                     messagebox.showerror("Error", "Failed to save transaction")
                     return
@@ -418,17 +443,38 @@ class ExpenseTrackerApp:
         
         dialog = tk.Toplevel(self.root)
         dialog.title(f"View {transaction_type.capitalize()}")
-        dialog.geometry("800x600")
+        dialog.geometry("900x600")
         
-        frame = ttk.Frame(dialog)
-        frame.pack(fill=tk.BOTH, expand=True, padx=10, pady=10)
+        # Create main container frame
+        container = ttk.Frame(dialog)
+        container.pack(fill=tk.BOTH, expand=True, padx=10, pady=10)
+        
+        # Create a canvas and scrollbar
+        canvas = tk.Canvas(container)
+        scrollbar = ttk.Scrollbar(container, orient="vertical", command=canvas.yview)
+        scrollable_frame = ttk.Frame(canvas)
+        
+        # Configure the canvas
+        canvas.configure(yscrollcommand=scrollbar.set)
+        canvas.bind('<Configure>', lambda e: canvas.configure(scrollregion=canvas.bbox("all")))
+        
+        # Pack the scrollbar and canvas
+        scrollbar.pack(side="right", fill="y")
+        canvas.pack(side="left", fill="both", expand=True)
+        canvas.create_window((0, 0), window=scrollable_frame, anchor="nw")
+        
+        # Make mouse wheel scroll
+        def _on_mousewheel(event):
+            canvas.yview_scroll(int(-1*(event.delta/120)), "units")
+        
+        canvas.bind_all("<MouseWheel>", _on_mousewheel)
         
         columns = ["ID", "Date", "Category/Source", "Amount (KES)", "Original Amount", "Notes"]
-        tree = ttk.Treeview(frame, columns=columns, show="headings")
+        tree = ttk.Treeview(scrollable_frame, columns=columns, show="headings")
         
         for col in columns:
             tree.heading(col, text=col)
-            tree.column(col, width=100, anchor=tk.W)
+            tree.column(col, width=120, anchor=tk.W)
         
         tree.column("ID", width=50)
         tree.column("Notes", width=200)
@@ -453,9 +499,6 @@ class ExpenseTrackerApp:
                     trans["Notes"]
                 ))
         
-        scrollbar = ttk.Scrollbar(frame, orient=tk.VERTICAL, command=tree.yview)
-        tree.configure(yscroll=scrollbar.set)
-        scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
         tree.pack(fill=tk.BOTH, expand=True)
 
     def set_budget(self):
@@ -504,11 +547,27 @@ class ExpenseTrackerApp:
         dialog.title("View Budgets")
         dialog.geometry("400x300")
         
-        frame = ttk.Frame(dialog)
-        frame.pack(fill=tk.BOTH, expand=True, padx=10, pady=10)
+        container = ttk.Frame(dialog)
+        container.pack(fill=tk.BOTH, expand=True, padx=10, pady=10)
+        
+        canvas = tk.Canvas(container)
+        scrollbar = ttk.Scrollbar(container, orient="vertical", command=canvas.yview)
+        scrollable_frame = ttk.Frame(canvas)
+        
+        canvas.configure(yscrollcommand=scrollbar.set)
+        canvas.bind('<Configure>', lambda e: canvas.configure(scrollregion=canvas.bbox("all")))
+        
+        scrollbar.pack(side="right", fill="y")
+        canvas.pack(side="left", fill="both", expand=True)
+        canvas.create_window((0, 0), window=scrollable_frame, anchor="nw")
+        
+        def _on_mousewheel(event):
+            canvas.yview_scroll(int(-1*(event.delta/120)), "units")
+        
+        canvas.bind_all("<MouseWheel>", _on_mousewheel)
         
         columns = ["Category", "Amount (KES)"]
-        tree = ttk.Treeview(frame, columns=columns, show="headings")
+        tree = ttk.Treeview(scrollable_frame, columns=columns, show="headings")
         
         for col in columns:
             tree.heading(col, text=col)
@@ -517,9 +576,6 @@ class ExpenseTrackerApp:
         for category, amount in budgets.items():
             tree.insert("", tk.END, values=(category, f"{float(amount):.2f}"))
         
-        scrollbar = ttk.Scrollbar(frame, orient=tk.VERTICAL, command=tree.yview)
-        tree.configure(yscroll=scrollbar.set)
-        scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
         tree.pack(fill=tk.BOTH, expand=True)
 
     def check_budgets(self):
@@ -555,27 +611,41 @@ class ExpenseTrackerApp:
         dialog.title("Monthly Spending Report")
         dialog.geometry("600x500")
         
-        frame = ttk.Frame(dialog)
-        frame.pack(fill=tk.BOTH, expand=True, padx=10, pady=10)
+        container = ttk.Frame(dialog)
+        container.pack(fill=tk.BOTH, expand=True, padx=10, pady=10)
         
-        # Text report
-        report_text = tk.Text(frame, height=10)
+        canvas = tk.Canvas(container)
+        scrollbar = ttk.Scrollbar(container, orient="vertical", command=canvas.yview)
+        scrollable_frame = ttk.Frame(canvas)
+        
+        canvas.configure(yscrollcommand=scrollbar.set)
+        canvas.bind('<Configure>', lambda e: canvas.configure(scrollregion=canvas.bbox("all")))
+        
+        scrollbar.pack(side="right", fill="y")
+        canvas.pack(side="left", fill="both", expand=True)
+        canvas.create_window((0, 0), window=scrollable_frame, anchor="nw")
+        
+        def _on_mousewheel(event):
+            canvas.yview_scroll(int(-1*(event.delta/120)), "units")
+        
+        canvas.bind_all("<MouseWheel>", _on_mousewheel)
+        
+        report_text = tk.Text(scrollable_frame, height=10)
         report_text.pack(fill=tk.X, pady=10)
         
         report_text.insert(tk.END, "Monthly Spending Report (KES)\n\n")
         for category, total in categories.items():
             report_text.insert(tk.END, f"{category}: KES {total:.2f}\n")
         
-        # Chart
         fig, ax = plt.subplots(figsize=(6, 4))
         ax.bar(categories.keys(), categories.values())
         ax.set_title("Monthly Spending by Category (KES)")
         plt.xticks(rotation=45)
         plt.tight_layout()
         
-        canvas = FigureCanvasTkAgg(fig, master=frame)
-        canvas.draw()
-        canvas.get_tk_widget().pack(fill=tk.BOTH, expand=True)
+        canvas_fig = FigureCanvasTkAgg(fig, master=scrollable_frame)
+        canvas_fig.draw()
+        canvas_fig.get_tk_widget().pack(fill=tk.BOTH, expand=True)
 
     def check_bill_reminders(self):
         expenses = self.load_user_data("expense")

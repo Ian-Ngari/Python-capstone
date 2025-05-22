@@ -14,5 +14,29 @@
             "income": "bigman_income.csv",
             "budgets": "bigman_budgets.json"
         }
+    },
+    "iano01": {
+        "password": "037ed7784ffedf223d9826be04a9222de331e4273983f0b6b73f4f875c5d95ee",
+        "data_files": {
+            "expense": "iano01_expenses.csv",
+            "income": "iano01_income.csv",
+            "budgets": "iano01_budgets.json"
+        }
+    },
+    "Edwin": {
+        "password": "19e58efc7f71d3ec0bd46d451e84674f072ccc74c3128f4f017e6981d4e92543",
+        "data_files": {
+            "expense": "Edwin_expenses.csv",
+            "income": "Edwin_income.csv",
+            "budgets": "Edwin_budgets.json"
+        }
+    },
+    "iano09": {
+        "password": "e19377857d984bc3a3ade8a71504047941c125aea120fd3a1c65e8418c95a2b5",
+        "data_files": {
+            "expense": "iano09_expenses.csv",
+            "income": "iano09_income.csv",
+            "budgets": "iano09_budgets.json"
+        }
     }
 }
